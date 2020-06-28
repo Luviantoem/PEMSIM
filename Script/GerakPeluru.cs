@@ -5,7 +5,7 @@ using UnityEngine;
 public class GerakPeluru : MonoBehaviour
 {
     private Transform myTransform;
-    public float waktuTerbangPeluru;
+    public float waktuTerbangPeluru; //t
     private TankBehaviorScript tankBehavior;
     private float _kecAwal;
     private float _sudutTembak;
@@ -15,6 +15,9 @@ public class GerakPeluru : MonoBehaviour
 
     public AudioClip audioLedakan;
     public GameObject ledakan;
+
+    public GameManagerScript gameManager;
+    private bool isLanded = true;
 
     // Start is called before the first frame update
     void Start()
@@ -30,12 +33,17 @@ public class GerakPeluru : MonoBehaviour
         _sudutMeriam = tankBehavior.sudutMeriam;
 
         audioSource = GetComponent<AudioSource>();
+
+        gameManager = GameObject.FindObjectOfType<GameManagerScript>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        waktuTerbangPeluru += Time.deltaTime;
+        if (isLanded)
+            waktuTerbangPeluru += Time.deltaTime;
+
+        gameManager._lamaWaktuTerbangPeluru = waktuTerbangPeluru;
 
         myTransform.position = PosisiTerbangPeluru(_posisiAwal, _kecAwal, waktuTerbangPeluru, _sudutTembak, _sudutMeriam);
     }
@@ -51,14 +59,30 @@ public class GerakPeluru : MonoBehaviour
     }
     private void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "Land")
+        if (other.tag == "Land" || other.tag == "Tree")
         {
-            Destroy(this.gameObject, 2f);
+            Destroy(this.gameObject, 5f);
 
             GameObject go = Instantiate(ledakan, myTransform.position, Quaternion.identity);
             Destroy(go, 2f);
 
             audioSource.PlayOneShot(audioLedakan);
+
+            gameManager._jarakTembak = Vector3.Distance(_posisiAwal, myTransform.position);
+
+            isLanded = false;
+        }
+
+        else if (other.tag == "Rumah")
+        {
+            audioSource.PlayOneShot(audioLedakan);
+
+            GameObject go = Instantiate(ledakan, myTransform.position, Quaternion.identity);
+            Destroy(go, 2f);
+
+
+            Destroy(this.gameObject, 3f);
+
         }
     }
 }
